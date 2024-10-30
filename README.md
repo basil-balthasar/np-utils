@@ -31,8 +31,10 @@ Features :
 - A simple way to send your parameters to the system
 - A simple way to disable all parameters currently on the system, to help you properly finish your experiment
 
-![Parameters preview](images/StimParamLoader/param_loader_demo.png)
-*Example of the parameters preview*
+<div style="text-align: center;">
+  <img src="images/StimParamLoader/param_loader_demo.png" alt="Parameters preview" width="500">
+  <p><em>Example of the parameters preview</em></p>
+</div>
 
 ### SpikeSorting
 
@@ -53,14 +55,18 @@ Features :
   - 3D plot of the clusters in the PCA/ICA latent space
   - Plot of all raw traces for a selection of clusters
 
-![Spike sorting](images/SpikeSorting/spike_sorting_clusters_lineplot.png)<br>
-*Example of a line plot of the average trace for each cluster*
+<div style="text-align: center;">
+  <img src="images/SpikeSorting/spike_sorting_clusters_lineplot.png" alt="Spike sorting" width="500">
+  <p><em>Example of a line plot of the average trace for each cluster</em></p>
+</div>
 
-![Spike sorting](images/SpikeSorting/spike_sorting_latent_space_plot.png)<br>
-*Example of a 3D plot of the clusters in the PCA/ICA latent space*
+<div style="text-align: center;">
+  <img src="images/SpikeSorting/spike_sorting_raw_lineplot.png" alt="Spike sorting" width="500">
+  <p><em>Example of a line plot of all raw traces for a selection of clusters</em></p>
 
-![Spike sorting](images/SpikeSorting/spike_sorting_raw_lineplot.png)<br>
-*Example of a line plot of all raw traces for a selection of clusters*
+<div style="text-align: center;">
+  <img src="images/SpikeSorting/spike_sorting_latent_space_plot.png" alt="Spike sorting" width="500">
+  <p><em>Example of a 3D plot of the clusters in the PCA/ICA latent space</em></p>
 
 ### RawRecordingLoader
 
