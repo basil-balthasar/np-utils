@@ -621,7 +621,8 @@ class SpikeSorting:
             self.logger.error(
                 "Too few spike events found, consider changing the time window or choosing another electrode with more activity."
             )
-            raise ValueError("Too few spike events found. Exiting.")
+            self.logger.info("All events will be considered as outliers.")
+
 
         self._fit_dimred()
         # fit dimred to artifacts
@@ -632,6 +633,9 @@ class SpikeSorting:
         self._fit_clustering(on_artifacts=True)
 
         self.logger.info("Recording clustering results...")
+        if len(self.processed_spike_events_df) < 10:
+            Clustering = type("Clustering", (), {"labels_": np.zeros(len(self.processed_spike_events_df)) - 1})
+            self._clustering = Clustering()
         self._add_clustering_to_raw_df()
         self._add_clustering_to_event_df()
         self._add_clustering_to_dimred_df()
