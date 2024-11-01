@@ -37,6 +37,7 @@ class MEA(Enum):
     Three = 2
     Four = 3
 
+    @staticmethod
     def get_from_electrode(electrode: int):
         return MEA(electrode // 32)
 
@@ -49,6 +50,7 @@ class Site(Enum):
     Three = 2
     Four = 3
 
+    @staticmethod
     def get_from_electrode(electrode_id: int):
         site = (electrode_id % 32) // 8
         return Site(site)
