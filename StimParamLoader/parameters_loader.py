@@ -124,15 +124,16 @@ class StimParamLoader:
         must_connect (bool, optional): If True, raise an error if the Intan is not connected. Defaults to False.
 
     Methods:
-        - reset(): Clear all parameters.
         - add_stimparam(stimparam: StimParam): Append a new StimParam to the list of parameters.
-        - show_all_stimparams(): Print out all the parameters.
         - preview_parameters(hide_empty: bool = True, colorblind: bool = False): Preview the parameters in a plot.
-        - all_parameters_enabled() -> bool: Check if all parameters are enabled.
         - enable_all(): Enable all parameters.
         - disable_all(): Disable all parameters.
         - send_parameters(): Send the parameters to the Intan.
         - disable_all_and_send(): Disable all parameters and send them to the Intan.
+        - show_all_stimparams(): Print out all the parameters.
+        - all_parameters_enabled() -> bool: Check if all parameters are enabled.
+        - reset(): Clear all parameters.
+        - get_log(): Return a DataFrame of all log messages. Use to get a history of all messages even if verbose is False.
 
     Raises:
         ValueError: If the number of parameters exceeds 16.
@@ -299,6 +300,10 @@ class StimParamLoader:
         self._meas = {}
 
     def get_log(self):
+        """Return a DataFrame of all log messages.
+
+        Use this to get a history of all messages even if verbose is False.
+        """
         return self.log.get_history()
 
     def reset(self):
