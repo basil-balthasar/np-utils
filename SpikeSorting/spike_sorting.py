@@ -5,6 +5,7 @@ This is intended to be a plug-and-play utility module for V1, without any change
 
 SpikeSorting : Spike sorting utility functions. Author : Cyril Achard, based on code by Gregoio Rebecchi, August 2024
 """
+
 import numpy as np
 import pandas as pd
 import multiprocessing
@@ -45,10 +46,12 @@ except ImportError:
 
 ### Spike Sorting
 
+
 class SpikeSortingNotRun(ValueError):
     def __init__(self, message="Please run the spike sorting algorithm first.", *args):
         super().__init__(message, *args)
         self.message = message
+
 
 class DimensionalityReduction:
     def __init__(self, method_name: str, n_components: int = None, **kwargs):
@@ -155,6 +158,7 @@ class DimensionalityReduction:
             columns=[f"C{i+1}" for i in range(self.dimred_data.shape[1])],
         )
         return self.dimred_data
+
 
 class MergedSpikeSorting:
     """Class to merge the results from two SpikeSorting instances."""
@@ -305,6 +309,7 @@ class MergedSpikeSorting:
         plt.xlabel("Time (ms)")
         plt.ylabel("Amplitude (uV)")
         plt.show()
+
 
 class SpikeSorting:
     try:
@@ -623,7 +628,6 @@ class SpikeSorting:
             )
             self.logger.info("All events will be considered as outliers.")
 
-
         self._fit_dimred()
         # fit dimred to artifacts
         self._fit_dimred(on_artifacts=True)
@@ -634,7 +638,11 @@ class SpikeSorting:
 
         self.logger.info("Recording clustering results...")
         if len(self.processed_spike_events_df) < 10:
-            Clustering = type("Clustering", (), {"labels_": np.zeros(len(self.processed_spike_events_df)) - 1})
+            Clustering = type(
+                "Clustering",
+                (),
+                {"labels_": np.zeros(len(self.processed_spike_events_df)) - 1},
+            )
             self._clustering = Clustering()
         self._add_clustering_to_raw_df()
         self._add_clustering_to_event_df()
@@ -1072,9 +1080,9 @@ class SpikeSorting:
             raise SpikeSortingNotRun()
         self.dimred_method_spikes.fit_data_df["Cluster"] = self._clustering.labels_
         if self.dimred_method_artifacts.fit_data_df is not None:
-            self.dimred_method_artifacts.fit_data_df[
-                "Cluster"
-            ] = self._clustering_artifacts.labels_
+            self.dimred_method_artifacts.fit_data_df["Cluster"] = (
+                self._clustering_artifacts.labels_
+            )
         else:
             self.logger.warning(
                 "Clustering labels could not be added to the artifacts.\n"

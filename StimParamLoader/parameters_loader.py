@@ -5,6 +5,7 @@ This is intended to be a plug-and-play utility module for V1, without any change
 
 StimParamLoader : Stimulation parameter loader and preview functions. Author : Cyril Achard, October 2024
 """
+
 ### IMPORTS ###
 ### StimParamLoader
 from typing import List
@@ -26,6 +27,7 @@ except ImportError:
 from neuroplatform import StimParam, IntanSofware
 
 ### ENUMS ###
+
 
 class MEA(Enum):
     """Mea Number"""
@@ -61,13 +63,14 @@ if not log.handlers:
     handler = logging.StreamHandler(STDOUT)
     handler.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
     log.addHandler(handler)
-    
+
+
 class LogHistory:
     """LogHistory - Utility class to manage log messages and display them in a DataFrame.
-    
+
     Args:
         verbose (bool, optional): If True, display log messages of INFO level. Defaults to True.
-        
+
     Methods:
         - info(message: str): Log an INFO message
         - warning(message: str): Log a WARNING message
@@ -75,30 +78,34 @@ class LogHistory:
         - debug(message: str): Log a DEBUG message
         - get_history(): Return a DataFrame of all log messages
     """
+
     def __init__(self, verbose=True):
         self._history = OrderedDict()
         self.logger = log
         self.verbose = verbose
-        
+
     def info(self, message):
         self._history[datetime.now(UTC)] = ("INFO", message)
         if self.verbose:
             self.logger.info(message)
-    
+
     def warning(self, message):
         self._history[datetime.now(UTC)] = ("WARNING", message)
         self.logger.warning(message)
-        
+
     def error(self, message):
         self._history[datetime.now(UTC)] = ("ERROR", message)
         self.logger.error(message)
-        
+
     def debug(self, message):
         self._history[datetime.now(UTC)] = ("DEBUG", message)
         self.logger.debug(message)
-    
+
     def get_history(self):
-        return pd.DataFrame.from_dict(self._history, orient='index', columns=['Level', 'Message'])
+        return pd.DataFrame.from_dict(
+            self._history, orient="index", columns=["Level", "Message"]
+        )
+
 
 class StimParamLoader:
     """StimParamLoader - Utility class to manage stimulation parameters and preview them in a plot.
@@ -124,7 +131,7 @@ class StimParamLoader:
         - disable_all(): Disable all parameters.
         - send_parameters(): Send the parameters to the Intan.
         - disable_all_and_send(): Disable all parameters and send them to the Intan.
-    
+
     Raises:
         ValueError: If the number of parameters exceeds 16.
         ValueError: If the parameter is not a StimParam instance.
@@ -194,12 +201,16 @@ class StimParamLoader:
         }
         ###
         self.log = LogHistory(verbose)
-        self.log.info("Please remember to book the system before connecting to the Intan.")
+        self.log.info(
+            "Please remember to book the system before connecting to the Intan."
+        )
         self.intan = intan
         self.stimparams = stimparams
 
         if not Path(self.MEA_SCHEMA).exists():
-            raise FileNotFoundError(f"MEA schema {self.MEA_SCHEMA} not found. Make sure the file is present on your machine, and that the path is correct.")
+            raise FileNotFoundError(
+                f"MEA schema {self.MEA_SCHEMA} not found. Make sure the file is present on your machine, and that the path is correct."
+            )
         else:
             self._mea_image = Image.open(self.MEA_SCHEMA)
 
@@ -287,7 +298,7 @@ class StimParamLoader:
 
     def get_log(self):
         return self.log.get_history()
-    
+
     def reset(self):
         """Clear all parameters."""
         self.stimparams = []
@@ -436,7 +447,7 @@ class StimParamLoader:
         if len(self.stimparams) == 0:
             self.log.info("No parameters to display.")
             return
-        
+
         mea_site_dict = {}
         for stimparam in self.stimparams:
             mea = MEA.get_from_electrode(stimparam.index)
@@ -511,7 +522,9 @@ class StimParamLoader:
     def _send_parameters(self):
         if self.intan is None:
             raise ValueError("Intan not connected")
-        if len(self._stimparams) == 0: # not needed as we check this in the send_parameters method, but leaving it here for now
+        if (
+            len(self._stimparams) == 0
+        ):  # not needed as we check this in the send_parameters method, but leaving it here for now
             self.log.warning("No parameters to send.")
             return
         self._update_parameters()
@@ -519,7 +532,7 @@ class StimParamLoader:
 
     def send_parameters(self):
         """Send the parameters to the Intan.
-        
+
         Returns:
             bool: True if the parameters were sent successfully, False otherwise.
         """
@@ -546,7 +559,7 @@ class StimParamLoader:
         """
         Disable all parameters and send them to the Intan.
         Use this when you are finished with the stimulation.
-        
+
         Returns:
             bool: True if the parameters were disabled and sent successfully, False otherwise.
         """

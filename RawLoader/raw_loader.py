@@ -5,9 +5,11 @@ This is intended to be a plug-and-play utility module for V1, without any change
 
 RawRecordingLoader : Raw recording loader utility functions, for h5f from Neuroplatform V2. Author : Cyril Achard, September 2024
 """
+
 from typing import List
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 try:
     import h5py
@@ -15,6 +17,7 @@ except ImportError:
     pass
 
 ### RawRecordingLoader
+
 
 class RawRecordingLoader:
     try:
@@ -255,13 +258,15 @@ class RawRecordingLoader:
 
     def _compute_mem(self):
         sliced_len = self.stop - self.start + 1
-        mem, u = sliced_len * 64, "bytes" # consider each index as a float64
+        mem, u = sliced_len * 64, "bytes"  # consider each index as a float64
         kB = 1024
         if mem >= kB * kB:
             mem, u = mem / kB / kB, "MB"
             if mem >= kB:
                 mem, u = mem / kB, "GB"
-        print(f"Estimated maximum memory usage for loading a single electrode: {mem:.2f} {u}")
+        print(
+            f"Estimated maximum memory usage for loading a single electrode: {mem:.2f} {u}"
+        )
         if u == "GB":
             if mem > self._mem_warn_limit and (
                 self.start is None and self.stop is None
@@ -347,4 +352,3 @@ class RawRecordingLoader:
             df.sort_index(inplace=True)
         print("Done.")
         return df
-

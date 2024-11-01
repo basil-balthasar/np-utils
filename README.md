@@ -4,7 +4,7 @@ This repository hosts a collection of utilities intended to be used by Neuroplat
 
 ## Installation
 
-The use of this code requires access to the FinalSpark Neuroplatform. 
+The use of this code requires access to the FinalSpark Neuroplatform.
 
 Please contact us if you have a request pertaining to using these utilities in your Neuroplatform project.
 
