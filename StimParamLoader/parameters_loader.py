@@ -13,6 +13,9 @@ from sys import stdout as STDOUT
 from enum import Enum
 from pathlib import Path
 from PIL import Image
+from collections import OrderedDict
+from datetime import datetime, UTC
+import pandas as pd
 
 try:
     import plotly.graph_objects as go
@@ -58,6 +61,44 @@ if not log.handlers:
     handler = logging.StreamHandler(STDOUT)
     handler.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
     log.addHandler(handler)
+    
+class LogHistory:
+    """LogHistory - Utility class to manage log messages and display them in a DataFrame.
+    
+    Args:
+        verbose (bool, optional): If True, display log messages of INFO level. Defaults to True.
+        
+    Methods:
+        - info(message: str): Log an INFO message
+        - warning(message: str): Log a WARNING message
+        - error(message: str): Log an ERROR message
+        - debug(message: str): Log a DEBUG message
+        - get_history(): Return a DataFrame of all log messages
+    """
+    def __init__(self, verbose=True):
+        self._history = OrderedDict()
+        self.logger = log
+        self.verbose = verbose
+        
+    def info(self, message):
+        self._history[datetime.now(UTC)] = ("INFO", message)
+        if self.verbose:
+            self.logger.info(message)
+    
+    def warning(self, message):
+        self._history[datetime.now(UTC)] = ("WARNING", message)
+        self.logger.warning(message)
+        
+    def error(self, message):
+        self._history[datetime.now(UTC)] = ("ERROR", message)
+        self.logger.error(message)
+        
+    def debug(self, message):
+        self._history[datetime.now(UTC)] = ("DEBUG", message)
+        self.logger.debug(message)
+    
+    def get_history(self):
+        return pd.DataFrame.from_dict(self._history, orient='index', columns=['Level', 'Message'])
 
 class StimParamLoader:
     """StimParamLoader - Utility class to manage stimulation parameters and preview them in a plot.
@@ -73,6 +114,17 @@ class StimParamLoader:
         intan (IntanSofware, optional): Intan software instance. Defaults to None.
         must_connect (bool, optional): If True, raise an error if the Intan is not connected. Defaults to False.
 
+    Methods:
+        - reset(): Clear all parameters.
+        - add_stimparam(stimparam: StimParam): Append a new StimParam to the list of parameters.
+        - show_all_stimparams(): Print out all the parameters.
+        - preview_parameters(hide_empty: bool = True, colorblind: bool = False): Preview the parameters in a plot.
+        - all_parameters_enabled() -> bool: Check if all parameters are enabled.
+        - enable_all(): Enable all parameters.
+        - disable_all(): Disable all parameters.
+        - send_parameters(): Send the parameters to the Intan.
+        - disable_all_and_send(): Disable all parameters and send them to the Intan.
+    
     Raises:
         ValueError: If the number of parameters exceeds 16.
         ValueError: If the parameter is not a StimParam instance.
@@ -112,6 +164,7 @@ class StimParamLoader:
         self,
         stimparams: List[StimParam] | None,
         intan: IntanSofware = None,
+        verbose=True,
         must_connect=False,
     ):
         """Create a StimParamLoader instance.
@@ -119,6 +172,7 @@ class StimParamLoader:
         Args:
             - stimparams (List[StimParam]): List of stimulation parameters. Cannot exceed 16 parameters.
             - intan (IntanSofware, optional): Intan software instance. Defaults to None.
+            - verbose (bool, optional): If True, display log messages. Defaults to True.
             - must_connect (bool, optional): If True, raise an error if the Intan is not connected. Defaults to False.
         """
         self._stimparams = []
@@ -139,7 +193,8 @@ class StimParamLoader:
             7: (10.72, 12.6),
         }
         ###
-        #log.info("Please remember to book the system before connecting to the Intan.")
+        self.log = LogHistory(verbose)
+        self.log.info("Please remember to book the system before connecting to the Intan.")
         self.intan = intan
         self.stimparams = stimparams
 
@@ -152,7 +207,7 @@ class StimParamLoader:
             if must_connect:
                 raise RuntimeError("Could not connect to Intan")
             else:
-                log.warning(
+                self.log.warning(
                     "Could not connect to Intan. You may preview parameters but sending parameters to the Intan will not be possible."
                 )
 
@@ -166,7 +221,7 @@ class StimParamLoader:
         #     raise ValueError("Maximum number of parameters reached (16)")
         if new_stimparams is None:
             self._stimparams = []
-            log.info("No parameters set.")
+            self.log.info("No parameters set.")
             return
         for param in new_stimparams:
             if not isinstance(param, StimParam):
@@ -203,14 +258,14 @@ class StimParamLoader:
                     f"Invalid phase amplitude: {param.phase_amplitude1}, {param.phase_amplitude2}"
                 )
             if param.phase_duration1 > 500 or param.phase_duration2 > 500:
-                log.warning(
+                self.log.warning(
                     f"Phase duration exceeds 500 us: {param.phase_duration1}, {param.phase_duration2}"
                 )
             if (
                 param.phase_duration1 * param.phase_amplitude1
                 != param.phase_duration2 * param.phase_amplitude2
             ):
-                log.warning(
+                self.log.warning(
                     f"Pulses are not charge balanced for electrode {param.index}. Please that this is intentional; otherwise make sure that the product of the phase duration and amplitude are equal for both phases."
                 )
             self._electrode_param_mapping[param.index] = param
@@ -219,7 +274,7 @@ class StimParamLoader:
             self._sites[param.index] = site
             self._meas[param.index] = mea
         if len(set(self._meas.values())) > 1:
-            log.warning(
+            self.log.warning(
                 "Parameters have been set across multiple MEAs. Please make sure this is intentional."
             )
 
@@ -230,6 +285,9 @@ class StimParamLoader:
         self._sites = {}
         self._meas = {}
 
+    def get_log(self):
+        return self.log.get_history()
+    
     def reset(self):
         """Clear all parameters."""
         self.stimparams = []
@@ -240,17 +298,21 @@ class StimParamLoader:
         Args:
             stimparam (StimParam): The new parameter to add.
         """
-        if len(self.stimparams) == 16:
-            raise ValueError("Maximum number of parameters reached (16)")
-        self.stimparams.append(stimparam)
+        try:
+            self.stimparams.append(stimparam)
+            self._update_parameters()
+            return True
+        except Exception as e:
+            self.log.error(f"Error: {e}")
+            return False
 
     def show_all_stimparams(self):
         """Print out all the parameters."""
         if len(self.stimparams) == 0:
-            log.info("No parameters to display.")
+            self.log.info("No parameters to display.")
         for electrode, stimparam in self._electrode_param_mapping.items():
-            log.info(f"Electrode {electrode}:\n{stimparam.display_attributes()}")
-            log.info("*" * 50)
+            self.log.info(f"Electrode {electrode}:\n{stimparam.display_attributes()}")
+            self.log.info("*" * 50)
 
     def _plot_site(
         self,
@@ -372,7 +434,7 @@ class StimParamLoader:
             colorblind (bool, optional): Use colorblind friendly colors. Defaults to False.
         """
         if len(self.stimparams) == 0:
-            log.info("No parameters to display.")
+            self.log.info("No parameters to display.")
             return
         
         mea_site_dict = {}
@@ -394,8 +456,8 @@ class StimParamLoader:
             horizontal_spacing=0.05,
             vertical_spacing=0.05,
         )
-        log.info("Plotting...")
-        log.info(
+        self.log.info("Plotting...")
+        self.log.info(
             "___ This preview does not reflect parameters currently set on the Intan ___"
         )
         for row, (mea, sites) in enumerate(mea_site_dict.items(), start=1):
@@ -433,7 +495,7 @@ class StimParamLoader:
     def enable_all(self):
         """Enable all parameters."""
         if len(self._stimparams) == 0:
-            log.info("No parameters to enable.")
+            self.log.warning("No parameters to enable.")
             return
         for param in self.stimparams:
             param.enable = True
@@ -441,7 +503,7 @@ class StimParamLoader:
     def disable_all(self):
         """Disable all parameters."""
         if len(self._stimparams) == 0:
-            log.info("No parameters to disable.")
+            self.log.warning("No parameters to disable.")
             return
         for param in self.stimparams:
             param.enable = False
@@ -450,35 +512,52 @@ class StimParamLoader:
         if self.intan is None:
             raise ValueError("Intan not connected")
         if len(self._stimparams) == 0: # not needed as we check this in the send_parameters method, but leaving it here for now
-            log.info("No parameters to send.")
+            self.log.warning("No parameters to send.")
             return
         self._update_parameters()
         self.intan.send_stimparam(self.stimparams)
 
     def send_parameters(self):
-        """Send the parameters to the Intan."""
-        if self.intan is None:
-            raise ValueError("Intan not connected")
-        if len(self._stimparams) == 0:
-            log.info("No parameters to send.")
-            return
-        if not self.all_parameters_enabled():
-            log.warning(
-                "--- Some parameters are disabled. Please make sure to enable the parameters you want to use. ---"
-            )
+        """Send the parameters to the Intan.
+        
+        Returns:
+            bool: True if the parameters were sent successfully, False otherwise.
+        """
+        try:
+            if self.intan is None:
+                raise ValueError("Intan not connected")
+            if len(self._stimparams) == 0:
+                self.log.warning("No parameters to send.")
+                return
+            if not self.all_parameters_enabled():
+                self.log.warning(
+                    "--- Some parameters are disabled. Please make sure to enable the parameters you want to use. ---"
+                )
 
-        log.info("Sending... Please wait 10 seconds")
-        self.intan.send_stimparam(self.stimparams)
-        log.info("Done.")
+            self.log.info("Sending... Please wait 10 seconds")
+            self.intan.send_stimparam(self.stimparams)
+            self.log.info("Done.")
+            return True
+        except Exception as e:
+            self.log.error(f"Error: {e}")
+            return False
 
     def disable_all_and_send(self):
         """
         Disable all parameters and send them to the Intan.
         Use this when you are finished with the stimulation.
+        
+        Returns:
+            bool: True if the parameters were disabled and sent successfully, False otherwise.
         """
-        if len(self._stimparams) == 0:
-            log.info("No parameters to disable.")
-            return
-        self.disable_all()
-        self._send_parameters()
-        log.info("All parameters disabled and sent to Intan.")
+        try:
+            if len(self._stimparams) == 0:
+                self.log.warning("No parameters to disable.")
+                return False
+            self.disable_all()
+            self._send_parameters()
+            self.log.info("All parameters disabled and sent to Intan.")
+            return True
+        except Exception as e:
+            self.log.error(f"Error: {e}")
+            return False
