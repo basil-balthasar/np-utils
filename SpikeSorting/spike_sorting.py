@@ -345,7 +345,7 @@ class SpikeSorting:
             n_components (int): Number of components to keep after dimensionality reduction. Default is 3.
             cluster_method (str): Clustering method to use. Must be either "HDBSCAN" or "OPTICS". Default is "HDBSCAN".
             clustering_kwargs (dict): Additional keyword arguments to pass to the clustering method. Default is None.
-            n_jobs (int): Number of jobs to run in parallel. Default is the number of CPUs.
+            n_jobs (int): Number of jobs to run in parallel. Default is 8.
 
         Attributes:
             fs_id (str): ID of the experiment ('fs#ID').
@@ -360,6 +360,17 @@ class SpikeSorting:
             raw_spikes_df (pd.DataFrame): DataFrame containing the raw spikes.
             processed_spike_events_df (pd.DataFrame): DataFrame containing the spike events with clustering results.
             logger (logging.Logger): Logger to use for logging.
+
+        Methods:
+            run_spike_sorting: Runs the spike sorting algorithm.
+            plot_explained_variance: Plots the explained variance of the PCA.
+            plot_spike_clustering_in_latent_space: Plots the clustering results in the latent space.
+            plot_artifact_clustering_in_latent_space: Plots the clustering results in the latent space for artifacts only.
+            plot_clustered_spikes: Plots the clustered spikes.
+            plot_clustered_artifacts: Plots the clustered artifacts.
+            plot_raw_outlier_spikes: Plots all the outlier spikes or artifacts.
+            plot_raw_spikes_for_cluster: Plots the raw spikes for a given cluster.
+            plot_raw_spikes_for_clusters: Plots the raw spikes for a given cluster.
         """
         ### Experiment parameters
         self.fs_id = None

@@ -121,6 +121,7 @@ class StimParamLoader:
     Args:
         stimparams (List[StimParam]): List of stimulation parameters. Cannot exceed 16 parameters.
         intan (IntanSofware, optional): Intan software instance. Defaults to None.
+        verbose (bool, optional): If True, display log messages. Defaults to True.
         must_connect (bool, optional): If True, raise an error if the Intan is not connected. Defaults to False.
 
     Methods:
@@ -136,7 +137,6 @@ class StimParamLoader:
         - get_log(): Return a DataFrame of all log messages. Use to get a history of all messages even if verbose is False.
 
     Raises:
-        ValueError: If the number of parameters exceeds 16.
         ValueError: If the parameter is not a StimParam instance.
         ValueError: If the electrode is already in use within one of the supplied parameters.
         ValueError: If the trigger is already in use within one of the supplied parameters.
