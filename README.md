@@ -12,6 +12,12 @@ Please contact us if you have a request pertaining to using these utilities in y
 
 We welcome any feedback, issues or contributions to this repository. Please use the Issues tab to report any problems or suggest improvements.
 
+You are also welcome to add your own utilities or suggest changes using Pull Requests.
+
+We only ask that you share utilities built upon the NeuroPlatform API without sharing core code or data from the NeuroPlatform itself.
+
+If you have any questions, please contact us.
+
 ## Documentation
 
 See the [official NeuroPlatform documentation](https://finalspark-np.github.io/np-docs/welcome.html#navigation).
