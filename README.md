@@ -14,7 +14,7 @@ We welcome any feedback, issues or contributions to this repository. Please use 
 
 ## Documentation
 
-TBA
+See the [official NeuroPlatform documentation](https://finalspark-np.github.io/np-docs/welcome.html#navigation).
 
 ## Contents
 
