@@ -24,7 +24,7 @@ try:
 except ImportError:
     pass
 
-from neuroplatform import StimParam, IntanSofware
+from neuroplatform import StimParam, StimShape, IntanSofware
 
 ### ENUMS ###
 
@@ -278,9 +278,21 @@ class StimParamLoader:
             if (
                 param.phase_duration1 * param.phase_amplitude1
                 != param.phase_duration2 * param.phase_amplitude2
+                and (
+                    param.stim_shape == StimShape.Biphasic
+                    or param.stim_shape == StimShape.BiphasicWithInterphaseDelay
+                )
             ):
                 self.log.warning(
-                    f"Pulses are not charge balanced for electrode {param.index}. Please that this is intentional; otherwise make sure that the product of the phase duration and amplitude are equal for both phases."
+                    f"Pulses are not charge balanced for electrode {param.index}. Please check that this is intentional; otherwise make sure that the product of the phase duration and amplitude are equal for both phases."
+                )
+            if (
+                param.stim_shape == StimShape.Triphasic
+                and param.phase_duration2 * param.phase_amplitude2 * 2
+                != param.phase_duration1 * param.phase_amplitude1
+            ):
+                self.log.warning(
+                    f"Pulses are not charge balanced for electrode {param.index}. Please check  that this is intentional; otherwise make sure that (phase2_duration * phase2_amplitude * 2) = (phase1_duration * phase1_amplitude)."
                 )
             self._electrode_param_mapping[param.index] = param
             site = Site.get_from_electrode(param.index)
