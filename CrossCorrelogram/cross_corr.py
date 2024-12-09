@@ -430,7 +430,7 @@ class CrossCorrelogram:
     #         plt.show()
 
     @staticmethod
-    def _plot_cross_corr_3d(cross_corrs, bin_sizes, deltat):
+    def _plot_cross_corr_3d(cross_corrs, bin_sizes, deltat, reverse=False):
         colors = plt.get_cmap("tab10").colors
         yticks = range(len(bin_sizes))
 
@@ -443,7 +443,8 @@ class CrossCorrelogram:
 
         min_bin_size = min(bin_sizes)
         xs = np.arange(-deltat, deltat + min_bin_size, min_bin_size)
-
+        if reverse:
+            cross_corrs = list(reversed(cross_corrs))
         for i, (c, k) in enumerate(zip(colors, yticks)):
             cross_corr_data = cross_corrs[i]
             cross_corr_data = (cross_corr_data - cross_corr_data.min()) / (
@@ -466,7 +467,7 @@ class CrossCorrelogram:
             for x, y in zip(xs, ys):
                 ax.plot([x, x], [k, k], [0, y], color="black", alpha=0.5)
 
-        ax.set_yticklabels(bin_sizes)
+        ax.set_yticklabels(bin_sizes if not reverse else list(reversed(bin_sizes)))
         plt.show()
 
     def compute_cc_grid_from_db(
