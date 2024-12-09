@@ -441,12 +441,17 @@ class CrossCorrelogram:
         ax.set_zlabel("Count")
         ax.set_yticks(yticks)
 
+        min_bin_size = min(bin_sizes)
+        xs = np.arange(-deltat, deltat + min_bin_size, min_bin_size)
+
         for i, (c, k) in enumerate(zip(colors, yticks)):
-            xs = np.arange(-deltat, deltat + bin_sizes[i], bin_sizes[i])
-            ys = np.zeros(len(xs))
             cross_corr_data = cross_corrs[i]
-            start_idx = len(xs) // 2 - len(cross_corr_data) // 2
-            ys[start_idx : start_idx + len(cross_corr_data)] = cross_corr_data
+            cross_corr_data = (cross_corr_data - cross_corr_data.min()) / (
+                cross_corr_data.max() - cross_corr_data.min()
+            )
+            ys = np.repeat(cross_corr_data, len(xs) // len(cross_corr_data))
+            padding = (len(xs) - len(ys)) // 2
+            ys = np.pad(ys, (padding, len(xs) - len(ys) - padding), "constant")
 
             cs = [c] * len(xs)
 
@@ -461,7 +466,7 @@ class CrossCorrelogram:
             for x, y in zip(xs, ys):
                 ax.plot([x, x], [k, k], [0, y], color="black", alpha=0.5)
 
-        ax.set_yticklabels(list(reversed(bin_sizes)))
+        ax.set_yticklabels(bin_sizes)
         plt.show()
 
     def compute_cc_grid_from_db(
