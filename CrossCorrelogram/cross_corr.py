@@ -3,6 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 try:
     import numba as nb
@@ -35,8 +39,45 @@ class CrossCorrelogram:
             normalize (bool, optional): Normalize the cross-correlogram by the square root of the product of the number of events in each dataframe.
         """
         self.deltat = deltat
-        self.bin_size = bin_size
-        self.normalize = normalize
+        self._bin_size = bin_size
+        self._normalize = normalize
+
+        self._n_bins = None
+
+    @property
+    def n_bins(self):
+        if self._n_bins is None:
+            self._n_bins = int(2 * self.deltat / self.bin_size)
+            if self._n_bins % 2 == 0:
+                self._n_bins += 1
+        return self._n_bins
+
+    @property
+    def bin_size(self):
+        return self._bin_size
+
+    @bin_size.setter
+    def bin_size(self, value):
+        if value <= 0:
+            raise ValueError("Bin size must be greater than 0.")
+        if value > self.deltat:
+            raise ValueError("Bin size must be less than or equal to deltat.")
+        if value >= self.deltat / 2:
+            log.warning(
+                "Bin size is greater than half of deltat. This may lead to uninterpretable results."
+            )
+
+        self._bin_size = value
+        self._n_bins = None
+
+    @property
+    def deltat(self):
+        return self._deltat
+
+    @deltat.setter
+    def deltat(self, value):
+        self._deltat = value
+        self._n_bins = None
 
     def prepare_dfs(self, dataframes):
         """
@@ -56,7 +97,14 @@ class CrossCorrelogram:
 
     @staticmethod
     @nb.njit(parallel=True)
-    def _cross_correlogram(events_i, events_j, deltat, bin_size, normalize=True):
+    def _cross_correlogram(
+        events_i,
+        events_j,
+        deltat,
+        bin_size,
+        normalize=True,
+        hide_center_bin=False,
+    ):
         """
         Compute the cross-correlogram between two sets of event times.
 
@@ -77,7 +125,7 @@ class CrossCorrelogram:
             n_bins += 1
         cross_corr = np.zeros(n_bins)
 
-        # Implementation 1 (faster)
+        # Implementation 1 (faster, despite nested loop)
         for i in nb.prange(n_i):
             local_corr = np.zeros(n_bins)
             for j in range(n_j):
@@ -97,6 +145,9 @@ class CrossCorrelogram:
         if normalize:
             cross_corr /= np.sqrt(n_i * n_j)
 
+        if hide_center_bin:
+            cross_corr[n_bins // 2] = 0
+
         return cross_corr
 
     def compute(
@@ -105,6 +156,8 @@ class CrossCorrelogram:
         df2: pd.DataFrame,
         start_time=None,
         end_time=None,
+        normalize=True,
+        hide_center_bin=False,
     ) -> np.ndarray:
         """
         Compute the cross-correlogram between the Time column of two dataframes.
@@ -114,6 +167,7 @@ class CrossCorrelogram:
             df2 (pd.DataFrame): Second dataframe containing event times.
             start_time (pd.Timestamp, optional): Start time for the analysis. If None, the minimum time from both dataframes is used.
             end_time (pd.Timestamp, optional): End time for the analysis. If None, the maximum time from both dataframes is used.
+            normalize (bool, optional): Normalize the cross-correlogram by the square root of the product of the number of events in each dataframe. Defaults to True.
 
         Returns:
             np.ndarray: Cross-correlogram array.
@@ -132,7 +186,14 @@ class CrossCorrelogram:
         events_i = df1["Time"].values
         events_j = df2["Time"].values
 
-        return self._cross_correlogram(events_i, events_j, self.deltat, self.bin_size)
+        return self._cross_correlogram(
+            events_i,
+            events_j,
+            self.deltat,
+            self.bin_size,
+            normalize=normalize,
+            hide_center_bin=hide_center_bin,
+        )
 
     def compute_from_db(
         self,
@@ -141,6 +202,7 @@ class CrossCorrelogram:
         channel_to,
         start_time,
         end_time,
+        normalize=True,
         check_for_triggers=False,
         keep_dfs=True,
     ):
@@ -155,6 +217,7 @@ class CrossCorrelogram:
             channel_to (int): ID of the second channel.
             start_time (pd.Timestamp): Start time for the analysis.
             end_time (pd.Timestamp): End time for the analysis.
+            normalize (bool, optional): Normalize the cross-correlogram by the square root of the product of the number of events in each dataframe. Defaults to True.
             check_for_triggers (bool, optional): Check for triggers in the provided times for the channels. Defaults to False.
             keep_dfs (bool, optional): If True, returns the dataframes used for the analysis. Defaults to True.
         """
@@ -175,26 +238,41 @@ class CrossCorrelogram:
                     f"Found {len(trigs)} triggers in the provided time range. Double-check whether there was stimulation on the provided channels, as this will alter the cross-correlogram."
                 )
 
-        cc = self.compute(df_i, df_j, start_time, end_time)
+        cc = self.compute(df_i, df_j, start_time, end_time, normalize=normalize)
         if keep_dfs:
             return cc, df_i, df_j
         return cc
 
-    def get_firing_rate(self, df):
+    def _get_firing_rate(self, df, smoothing_window=1):
         """
         Compute the firing rate of the two dataframes.
 
         Args:
-            df
+            df (pd.DataFrame): Dataframe containing event times.
+            smoothing_window (int, optional): Window size for smoothing the firing rate. Defaults to 1, which means no smoothing.
+
+        Returns:
+            pd.DataFrame: Dataframe containing the firing rate of the dataframe.
         """
         df = df.copy(deep=True)
         df.drop(columns=["Amplitude"], inplace=True)
         df.index = pd.DatetimeIndex(df["Time"])
         firing_rate = df.groupby("channel").resample("1s").size()
         firing_rate = firing_rate.reset_index(name="Firing rate")
+
+        if smoothing_window > 1:
+            firing_rate["Firing rate"] = (
+                firing_rate.groupby("channel")["Firing rate"]
+                .rolling(smoothing_window)
+                .mean()
+                .reset_index(drop=True)
+            )
+
         return firing_rate
 
-    def plot_firing_rate(self, dfs, ax=None, start_time=None, end_time=None):
+    def _plot_firing_rate(
+        self, dfs, ax=None, start_time=None, end_time=None, smoothing_window=1
+    ):
         """
         Plot the firing rate of the two dataframes.
 
@@ -203,14 +281,15 @@ class CrossCorrelogram:
             ax (plt.Axes, optional): Axes object to plot on. If None, a new figure is created.
             start_time (pd.Timestamp, optional): Start time for the analysis. If None, the minimum time from both dataframes is used.
             end_time (pd.Timestamp, optional): End time for the analysis. If None, the maximum time from both dataframes is used.
+            smoothing_window (int, optional): Window size for smoothing the firing rate. Defaults to 1, which means no smoothing.
         """
         if ax is None:
             _, ax = plt.subplots(figsize=(20, 10))
         all_dfs = []
         for df in dfs:
-            firing_rate = self.get_firing_rate(df)
+            firing_rate = self._get_firing_rate(df, smoothing_window=smoothing_window)
             all_dfs.append(firing_rate)
-        df_all = pd.concat(all_dfs)
+        df_all = pd.concat(all_dfs).reset_index(drop=False)
         sns.lineplot(
             data=df_all,
             x="Time",
@@ -249,6 +328,18 @@ class CrossCorrelogram:
         label1=None,
         label2=None,
     ):
+        """
+        Plot the cross-correlograms of two dataframes for comparison.
+
+        Args:
+            cross_corr1 (np.ndarray): Cross-correlogram array of the first dataframe.
+            cross_corr2 (np.ndarray): Cross-correlogram array of the second dataframe.
+            from_ (str, optional): Name of the first dataframe for the plot title.
+            to_ (str, optional): Name of the second dataframe for the plot title.
+            ax (plt.Axes, optional): Axes object to plot on. If None, a new figure is created.
+            label1 (str, optional): Label for the first dataframe.
+            label2 (str, optional): Label for the second dataframe.
+        """
         if ax is None:
             _, ax = plt.subplots(figsize=(10, 5))
         self._plot(
@@ -303,33 +394,181 @@ class CrossCorrelogram:
             alpha=0.5,
         )
 
-    def compute_from_dict(self, df_dict):
-        """Compute all pairwise cross-correlograms from a dictionary of dataframes."""
-        ccs = {}
-        for channel, df in tqdm(df_dict.items(), desc="Computing cross-correlograms"):
-            cross_corr = {}
-            for other_channel, other_df in df_dict.items():
-                if channel != other_channel:
-                    cross_corr[other_channel] = self.compute(df, other_df)
-            ccs[channel] = cross_corr
+    # def compute_from_dict(self, df_dict):
+    #     """Compute all pairwise cross-correlograms from a dictionary of dataframes."""
+    #     ccs = {}
+    #     for channel, df in tqdm(
+    #         df_dict.items(), desc="Computing cross-correlograms"
+    #     ):
+    #         cross_corr = {}
+    #         for other_channel, other_df in df_dict.items():
+    #             if channel != other_channel:
+    #                 cross_corr[other_channel] = self.compute(df, other_df)
+    #         ccs[channel] = cross_corr
 
-        return ccs
+    #     return ccs
 
-    def plot_from_dict(self, ccs, channels=None):
-        """Plot all pairwise cross-correlograms from a dictionary of cross-correlograms."""
-        for i, (channel, cross_corrs) in enumerate(ccs.items()):
-            if channels is not None and i not in channels:
-                continue
-            n_cols = 4
-            n_rows = int(np.ceil(len(cross_corrs) / n_cols))
-            fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5 * n_rows))
+    # def plot_from_dict(self, ccs, channels=None):
+    #     """Plot all pairwise cross-correlograms from a dictionary of cross-correlograms."""
+    #     for i, (channel, cross_corrs) in enumerate(ccs.items()):
+    #         if channels is not None and i not in channels:
+    #             continue
+    #         n_cols = 4
+    #         n_rows = int(np.ceil(len(cross_corrs) / n_cols))
+    #         fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5 * n_rows))
+    #         axes = axes.flatten()
+    #         for j, (other_channel, cross_corr) in enumerate(
+    #             cross_corrs.items()
+    #         ):
+    #             self._plot(
+    #                 cross_corr,
+    #                 from_=str(channel),
+    #                 to_=str(other_channel),
+    #                 ax=axes[j],
+    #             )
+    #         plt.tight_layout()
+    #         plt.show()
+
+    @staticmethod
+    def _plot_cross_corr_3d(cross_corrs, bin_sizes, deltat):
+        colors = plt.get_cmap("tab10").colors
+        yticks = range(len(bin_sizes))
+
+        fig = plt.figure(figsize=(20, 10))
+        ax = fig.add_subplot(111, projection="3d")
+        ax.set_xlabel("Time (ms)")
+        ax.set_ylabel("Bin size (ms)")
+        ax.set_zlabel("Count")
+        ax.set_yticks(yticks)
+
+        for i, (c, k) in enumerate(zip(colors, yticks)):
+            xs = np.arange(-deltat, deltat + bin_sizes[i], bin_sizes[i])
+            ys = np.zeros(len(xs))
+            cross_corr_data = cross_corrs[i]
+            start_idx = len(xs) // 2 - len(cross_corr_data) // 2
+            ys[start_idx : start_idx + len(cross_corr_data)] = cross_corr_data
+
+            cs = [c] * len(xs)
+
+            ax.bar(
+                xs,
+                ys,
+                zs=k,
+                zdir="y",
+                color=cs,
+                alpha=1.0,
+            )
+            for x, y in zip(xs, ys):
+                ax.plot([x, x], [k, k], [0, y], color="black", alpha=0.5)
+
+        ax.set_yticklabels(list(reversed(bin_sizes)))
+        plt.show()
+
+    def compute_cc_grid_from_db(
+        self,
+        sources,
+        targets,
+        fs_id,
+        start_time,
+        end_time,
+        check_for_triggers=False,
+    ):
+        """Compute a grid of cross-correlograms between sources and targets from the database.
+
+        Note : requires neuroplatform access to be used.
+
+        Args:
+            sources (list): List of source channels.
+            targets (list): List of target channels.
+            fs_id (str): ID of the fileset.
+            start_time (pd.Timestamp): Start time for the analysis.
+            end_time (pd.Timestamp): End time for the analysis.
+            check_for_triggers (bool, optional): Check for triggers in the provided times for the channels. Defaults to False.
+
+        Returns:
+            np.array: 3D array of cross-correlograms. Shape is n_sources x n_targets x n_bins.
+        """
+        results = np.zeros(
+            (len(sources), len(targets), 2 * self.deltat // self.bin_size + 1)
+        )
+
+        for i, source in enumerate(
+            tqdm(sources, desc="Computing cross-correlograms...")
+        ):
+            for j, target in enumerate(targets):
+                try:
+                    cross_corr = self.compute_from_db(
+                        fs_id,
+                        source,
+                        target,
+                        start_time,
+                        end_time,
+                        check_for_triggers=check_for_triggers,
+                        keep_dfs=False,
+                    )
+                    results[i, j] = cross_corr
+                except KeyboardInterrupt:
+                    return
+                except Exception as e:
+                    print(f"Error from {source} to {target} : {e}")
+                    continue
+
+        return results
+
+    def plot_cc_grid(
+        self,
+        cross_corrs: np.array,
+        channels_i=None,
+        channels_j=None,
+        n_rows=8,
+        n_cols=4,
+        avoid_symmetry=True,
+    ):
+        """PLot a grid of cross-correlograms.
+
+        Args:
+            cross_corrs (np.array): 3D array of cross-correlograms. Shape should be n_sources x n_targets x n_bins. If a cross-correlogram is not available, it should be set to all zeros.
+            channels_i (list, optional): List of channels to plot. If None, all channels are plotted. Defaults to None.
+            channels_j (list, optional): List of channels to plot. If None, all channels are plotted. Defaults to None.
+            n_rows (int, optional): Number of rows in the grid. Defaults to 8.
+            n_cols (int, optional): Number of columns in the grid. Defaults to 4.
+            avoid_symmetry (bool, optional): If True, only the upper triangle of the grid is plotted. Defaults to True.
+        """
+        if channels_i is not None:
+            channels_i = sorted(channels_i)
+        if channels_j is not None:
+            channels_j = sorted(channels_j)
+
+        if not isinstance(cross_corrs, np.ndarray) or len(cross_corrs.shape) != 3:
+            raise ValueError(
+                "cross_corrs should be a 3D numnpy array of size : n_sources x n_targets x n_bins"
+            )
+
+        sources = range(cross_corrs.shape[0]) if channels_i is None else channels_i
+        targets = range(cross_corrs.shape[1]) if channels_j is None else channels_j
+        for i in tqdm(sources, desc="Plotting cross-correlograms..."):
+            fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(20, 40))
             axes = axes.flatten()
-            for j, (other_channel, cross_corr) in enumerate(cross_corrs.items()):
-                self._plot(
-                    cross_corr,
-                    from_=str(channel),
-                    to_=str(other_channel),
-                    ax=axes[j],
-                )
+            tot = 0
+            for j in targets:
+                if avoid_symmetry and j > i:
+                    continue
+                try:
+                    cc = cross_corrs[i, j]
+                    if cc.sum() == 0:
+                        continue
+                    ax = axes[tot]
+                    self.plot(cc, from_=str(i), to_=str(j), ax=ax)
+                except KeyboardInterrupt:
+                    return
+                except Exception as e:
+                    print(f"Error from {i} to {j} : {e}")
+                    continue
+                tot += 1
+
+            # Hide any unused subplots
+            for k in range(tot, len(axes)):
+                fig.delaxes(axes[k])
+
             plt.tight_layout()
             plt.show()
