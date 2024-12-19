@@ -27,6 +27,10 @@ class CrossCorrelogram:
         prepare_dfs(dataframes): Format dataframes for cross-correlogram analysis.
         compute(df1, df2, start_time=None, end_time=None): Compute the cross-correlogram between the Time column of two dataframes.
         plot(cross_corr, from_="", to_=""): Plot the cross-correlogram.
+        plot_comparison(cross_corr1, cross_corr2, from_="", to_="", label1=None, label2=None): Plot the cross-correlograms of two dataframes for comparison.
+        compute_from_db(fs_id, channel_from, channel_to, start_time, end_time, normalize=True, check_for_triggers=False, keep_dfs=True): Compute the cross-correlogram between two channels from the database.
+        compute_cc_grid_from_db(sources, targets, fs_id, start_time, end_time, check_for_triggers=False): Compute a grid of cross-correlograms between sources and targets from the database.
+        plot_cc_grid(cross_corrs, channels_i=None, channels_j=None, n_rows=8, n_cols=4, avoid_symmetry=True): PLot a grid of cross-correlograms.
     """
 
     def __init__(self, deltat: int, bin_size: float, normalize: bool = True):
@@ -38,9 +42,9 @@ class CrossCorrelogram:
             bin_size (float): Bin size in milliseconds.
             normalize (bool, optional): Normalize the cross-correlogram by the square root of the product of the number of events in each dataframe.
         """
-        self.deltat = deltat
+        self._deltat = deltat
         self._bin_size = bin_size
-        self._normalize = normalize
+        self.normalize = normalize
 
         self._n_bins = None
 
@@ -156,7 +160,7 @@ class CrossCorrelogram:
         df2: pd.DataFrame,
         start_time=None,
         end_time=None,
-        normalize=True,
+        normalize=None,
         hide_center_bin=False,
     ) -> np.ndarray:
         """
@@ -168,6 +172,7 @@ class CrossCorrelogram:
             start_time (pd.Timestamp, optional): Start time for the analysis. If None, the minimum time from both dataframes is used.
             end_time (pd.Timestamp, optional): End time for the analysis. If None, the maximum time from both dataframes is used.
             normalize (bool, optional): Normalize the cross-correlogram by the square root of the product of the number of events in each dataframe. Defaults to True.
+            hide_center_bin (bool, optional): Hide the center bin of the cross-correlogram. Defaults to False.
 
         Returns:
             np.ndarray: Cross-correlogram array.
@@ -191,7 +196,7 @@ class CrossCorrelogram:
             events_j,
             self.deltat,
             self.bin_size,
-            normalize=normalize,
+            normalize=self.normalize if normalize is None else normalize,
             hide_center_bin=hide_center_bin,
         )
 
@@ -202,10 +207,10 @@ class CrossCorrelogram:
         channel_to,
         start_time,
         end_time,
-        normalize=True,
+        normalize=None,
         check_for_triggers=False,
         keep_dfs=True,
-    ):
+    ) -> np.ndarray:
         """
         Compute the cross-correlogram between two channels from the database.
 
@@ -238,7 +243,13 @@ class CrossCorrelogram:
                     f"Found {len(trigs)} triggers in the provided time range. Double-check whether there was stimulation on the provided channels, as this will alter the cross-correlogram."
                 )
 
-        cc = self.compute(df_i, df_j, start_time, end_time, normalize=normalize)
+        cc = self.compute(
+            df_i,
+            df_j,
+            start_time,
+            end_time,
+            normalize=self.normalize if normalize is None else normalize,
+        )
         if keep_dfs:
             return cc, df_i, df_j
         return cc
@@ -557,7 +568,7 @@ class CrossCorrelogram:
             axes = axes.flatten()
             tot = 0
             for j in targets:
-                if avoid_symmetry and j > i:
+                if avoid_symmetry and j < i:
                     continue
                 try:
                     cc = cross_corrs[i, j]
