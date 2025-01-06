@@ -3,7 +3,7 @@ Neuroplatform Utils - Utility functions for the Neuroplatform project.
 
 This is intended to be a plug-and-play utility module for V1, without any changes to the main Neuroplatform codebase.
 
-SpikeSorting : Spike sorting utility functions. 
+SpikeSorting : Spike sorting utility functions.
 Authors : Cyril Achard, based on code by Gregorio Rebecchi, August 2024
 """
 
