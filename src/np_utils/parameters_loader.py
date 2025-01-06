@@ -27,9 +27,7 @@ except ImportError:
 try:
     from neuroplatform import StimParam, StimShape, IntanSofware
 except ModuleNotFoundError:
-    raise ModuleNotFoundError(
-        "Neuroplatform access is required to use this utility."
-    )
+    raise ModuleNotFoundError("Neuroplatform access is required to use this utility.")
 
 ### ENUMS ###
 
