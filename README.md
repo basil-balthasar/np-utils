@@ -70,6 +70,10 @@ This utility is used to help you setup and send your stimulation parameters to o
 from np_utils.StimParamLoader import StimParamLoader
 ```
 
+```python
+from np_utils.StimParamLoader import StimParamLoader
+```
+
 Features :
 
 - Automated checking of your parameters for errors or redundancies
@@ -89,6 +93,10 @@ This utility is used to perform a simple spike sorting operation on the raw spik
 This will assign each spike to a cluster, which can then be used for your data analysis.
 
 It requires a certain number of minimum events for proper operation; you may want to adjust the number of components
+
+```python
+from np_utils.SpikeSorting import SpikeSorting
+```
 
 ```python
 from np_utils.SpikeSorting import SpikeSorting
@@ -128,11 +136,29 @@ A tool to load raw recordings from the Neuroplatform database.
 from np_utils.RawRecordingLoader import RawRecordingLoader
 ```
 
+```python
+from np_utils.RawRecordingLoader import RawRecordingLoader
+```
+
 Features :
 
 - Load raw recordings from an h5 file
   - Choose which channels to load
   - For memory-heavy recordings, specify either the index or the time range of the recording you wish to load
+
+### CrossCorrelogram
+
+A tool to compute the cross-correlogram between two spike trains.
+
+```python
+from np_utils.CrossCorrelogram import CrossCorrelogram
+```
+
+Features :
+
+- Compute the cross-correlogram between two spike trains
+  - Fast numba-based implementation
+  - Plotting utilities to visualize the cross-correlogram
 
 ### CrossCorrelogram
 
