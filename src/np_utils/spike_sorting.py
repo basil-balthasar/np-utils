@@ -21,7 +21,10 @@ from matplotlib.colors import ListedColormap
 from IPython.display import display
 import logging
 
-from neuroplatform import Database
+try:
+    from neuroplatform import Database
+except ModuleNotFoundError:
+    raise ImportError("Neuroplatform access is required to use this utility.")
 
 COLORBLIND_MAP = ListedColormap(
     [
