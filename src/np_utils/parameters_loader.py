@@ -24,7 +24,10 @@ try:
 except ImportError:
     pass
 
-from neuroplatform import StimParam, StimShape, IntanSofware
+try:
+    from neuroplatform import StimParam, StimShape, IntanSofware
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("Neuroplatform access is required to use this utility.")
 
 ### ENUMS ###
 

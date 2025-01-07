@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "np_utils"
+version = "0.1.0"
+requires-python = ">=3.11"
+authors = [
+    {name = "Cyril Achard", email = "cyril.achard@finalspark.com"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+description = "A collection of utilities for the FinalSpark Neuroplatform"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "numpy",
+    "pandas"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+    "np_utils",
+]
+
+[tool.setuptools.package-data]
+np_utils = [
+    "src/np_utils/MEA_schema.png",
+]
+
+[project.urls]
+Homepage = "https://github.com/FinalSpark-np/np-utils"
+Documentation = "https://finalspark-np.github.io/np-docs/welcome.html#navigation"
+Source = "https://github.com/FinalSpark-np/np-utils"
+Tracker = "https://github.com/FinalSpark-np/np-utils/issues"
+
+
+
+[project.optional-dependencies]
+all = ["matplotlib", "seaborn", "scipy", "scikit-learn", "numba", "tqdm", "joblib", "h5py", "Pillow", "plotly", "nbformat"]
+SPL = ["plotly", "Pillow", "tqdm", "nbformat"]
+SSG = ["scikit-learn", "matplotlib", "seaborn", "tqdm", "joblib"]
+RRL = ["h5py"]
+CCM = ["matplotlib", "seaborn", "numba", "tqdm"]

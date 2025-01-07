@@ -2,12 +2,6 @@
 
 This repository hosts a collection of utilities intended to be used by Neuroplatform users.
 
-## Installation
-
-The use of this code requires access to the FinalSpark Neuroplatform.
-
-Please contact us if you have a request pertaining to using these utilities in your Neuroplatform project.
-
 ## Contributions and issues
 
 We welcome any feedback, issues or contributions to this repository. Please use the Issues tab to report any problems or suggest improvements.
@@ -22,13 +16,59 @@ If you have any questions, please contact us.
 
 See the [official NeuroPlatform documentation](https://finalspark-np.github.io/np-docs/welcome.html#navigation).
 
-## Contents
+## Installation
+
+The use of some the utilities' code requires access to the FinalSpark Neuroplatform.
+
+Please contact us if you have a request pertaining to using these utilities in your Neuroplatform project.
+
+Additionally, python>=3.11 is required for some of the utilities to work. If your provided Neuroplatform environment does not have python>=3.11, please contact us.
+
+To install the utilities, you can install from GitHub the required packages using the following commands:
+
+- Install all dependencies :
+
+```bash
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[all]
+```
+
+- Install only the StimParamLoader dependencies :
+
+```bash
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[SPL]
+```
+
+- Install only the SpikeSorting dependencies :
+
+```bash
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[SSG]
+```
+
+- Install only the RawRecordingLoader dependencies :
+
+```bash
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[RRL]
+```
+
+- Install only the CrossCorrelogram dependencies :
+
+```bash
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[CCM]
+```
+
+## Contents & Usage
+
+Please see the documentation for each utility for more information on how to use them.
 
 ### StimParamLoader
 
 This utility is used to help you setup and send your stimulation parameters to our system.
 
 **NOTE for deployment:** Make sure the MEA schema image is placed appropriately in the same folder as the .py, and that the path is correctly set in the code.
+
+```python
+from np_utils.StimParamLoader import StimParamLoader
+```
 
 Features :
 
@@ -49,6 +89,10 @@ This utility is used to perform a simple spike sorting operation on the raw spik
 This will assign each spike to a cluster, which can then be used for your data analysis.
 
 It requires a certain number of minimum events for proper operation; you may want to adjust the number of components
+
+```python
+from np_utils.SpikeSorting import SpikeSorting
+```
 
 Features :
 
@@ -80,8 +124,26 @@ A tool to load raw recordings from the Neuroplatform database.
 
 *Note : if you wish to perform raw recordings, please contact us to get access to the raw recording feature. In the future, this will be accessible to all Neuroplatform users, but currently requires manual adjustments.*
 
+```python
+from np_utils.RawRecordingLoader import RawRecordingLoader
+```
+
 Features :
 
 - Load raw recordings from an h5 file
   - Choose which channels to load
   - For memory-heavy recordings, specify either the index or the time range of the recording you wish to load
+
+### CrossCorrelogram
+
+A tool to compute the cross-correlogram between two spike trains.
+
+```python
+from np_utils.CrossCorrelogram import CrossCorrelogram
+```
+
+Features :
+
+- Compute the cross-correlogram between two spike trains
+  - Fast numba-based implementation
+  - Plotting utilities to visualize the cross-correlogram
