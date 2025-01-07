@@ -29,31 +29,31 @@ To install the utilities, you can install from GitHub the required packages usin
 - Install all dependencies :
 
 ```bash
-pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[all]
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[all]
 ```
 
 - Install only the StimParamLoader dependencies :
 
 ```bash
-pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[SPL]
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[SPL]
 ```
 
 - Install only the SpikeSorting dependencies :
 
 ```bash
-pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[SSG]
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[SSG]
 ```
 
 - Install only the RawRecordingLoader dependencies :
 
 ```bash
-pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[RRL]
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[RRL]
 ```
 
 - Install only the CrossCorrelogram dependencies :
 
 ```bash
-pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np-utils[CCM]
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[CCM]
 ```
 
 ## Contents & Usage
