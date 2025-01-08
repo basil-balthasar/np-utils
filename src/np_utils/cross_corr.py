@@ -210,6 +210,7 @@ class CrossCorrelogram:
         normalize=None,
         check_for_triggers=False,
         keep_dfs=True,
+        hide_center_bin=False,
     ) -> np.ndarray:
         """
         Compute the cross-correlogram between two channels from the database.
@@ -225,6 +226,7 @@ class CrossCorrelogram:
             normalize (bool, optional): Normalize the cross-correlogram by the square root of the product of the number of events in each dataframe. Defaults to True.
             check_for_triggers (bool, optional): Check for triggers in the provided times for the channels. Defaults to False.
             keep_dfs (bool, optional): If True, returns the dataframes used for the analysis. Defaults to True.
+            hide_center_bin (bool, optional): Hide the center bin of the cross-correlogram. Defaults to False.
         """
         try:
             from neuroplatform import Database
@@ -249,6 +251,7 @@ class CrossCorrelogram:
             start_time,
             end_time,
             normalize=self.normalize if normalize is None else normalize,
+            hide_center_bin=hide_center_bin,
         )
         if keep_dfs:
             return cc, df_i, df_j
