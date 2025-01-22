@@ -72,7 +72,9 @@ class MEAType(Enum):
             raise ValueError("MEA type not recognized.")
 
 
-class MEA(Enum):
+class MEA(
+    Enum
+):  # NOTE : these should likely be centralized and standardized as they are used in multiple places
     """MEA Number"""
 
     One = 0
@@ -89,7 +91,9 @@ class MEA(Enum):
         return list(range(mea_number * 32, (mea_number + 1) * 32))
 
 
-class Site(Enum):
+class Site(
+    Enum
+):  # NOTE : these should likely be centralized and standardized as they are used in multiple places
     """Neurosphere site ID, from 1 to 4"""
 
     One = 0

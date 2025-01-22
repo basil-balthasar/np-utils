@@ -56,6 +56,12 @@ pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[RRL]
 pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[CCM]
 ```
 
+- Install only the StimScan dependencies :
+
+```bash
+pip install git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[SSN]
+```
+
 ## Contents & Usage
 
 Please see the documentation for each utility for more information on how to use them.
@@ -67,11 +73,7 @@ This utility is used to help you setup and send your stimulation parameters to o
 **NOTE for deployment:** Make sure the MEA schema image is placed appropriately in the same folder as the .py, and that the path is correctly set in the code.
 
 ```python
-from np_utils.StimParamLoader import StimParamLoader
-```
-
-```python
-from np_utils.StimParamLoader import StimParamLoader
+from np_utils.parameter_loader import StimParamLoader
 ```
 
 Features :
@@ -95,11 +97,7 @@ This will assign each spike to a cluster, which can then be used for your data a
 It requires a certain number of minimum events for proper operation; you may want to adjust the number of components
 
 ```python
-from np_utils.SpikeSorting import SpikeSorting
-```
-
-```python
-from np_utils.SpikeSorting import SpikeSorting
+from np_utils.spike_sorting import SpikeSorting
 ```
 
 Features :
@@ -133,11 +131,7 @@ A tool to load raw recordings from the Neuroplatform database.
 *Note : if you wish to perform raw recordings, please contact us to get access to the raw recording feature. In the future, this will be accessible to all Neuroplatform users, but currently requires manual adjustments.*
 
 ```python
-from np_utils.RawRecordingLoader import RawRecordingLoader
-```
-
-```python
-from np_utils.RawRecordingLoader import RawRecordingLoader
+from np_utils.raw_recording_loader import RawRecordingLoader
 ```
 
 Features :
@@ -151,7 +145,7 @@ Features :
 A tool to compute the cross-correlogram between two spike trains.
 
 ```python
-from np_utils.CrossCorrelogram import CrossCorrelogram
+from np_utils.cross_corr import CrossCorrelogram
 ```
 
 Features :
@@ -160,16 +154,17 @@ Features :
   - Fast numba-based implementation
   - Plotting utilities to visualize the cross-correlogram
 
-### CrossCorrelogram
+### StimScan
 
-A tool to compute the cross-correlogram between two spike trains.
+A tool to scan for optimal stimulation parameters on a given MEA.
 
 ```python
-from np_utils.CrossCorrelogram import CrossCorrelogram
+from  np_utils.stim_scan import StimScan
 ```
 
 Features :
 
-- Compute the cross-correlogram between two spike trains
-  - Fast numba-based implementation
-  - Plotting utilities to visualize the cross-correlogram
+- Automated scan from a list of parameters
+- Plots showing the effects of each parameter on the MEA
+
+Future additions may comprise automatic selection of best parameters as well as summary metrics.
