@@ -20,7 +20,8 @@ classifiers = [
 
 dependencies = [
     "numpy",
-    "pandas"
+    "pandas",
+    "numba",
 ]
 
 [tool.setuptools.packages.find]
