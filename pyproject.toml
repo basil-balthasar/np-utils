@@ -48,4 +48,9 @@ SPL = ["plotly", "Pillow", "tqdm", "nbformat"]
 SSG = ["scikit-learn", "matplotlib", "seaborn", "tqdm", "joblib"]
 RRL = ["h5py"]
 CCM = ["matplotlib", "seaborn", "numba", "tqdm"]
-SSN = ["matplotlib", "tqdm", "seaborn", "git+https://github.com/FinalSpark-np/np-utils.git#egg=np_utils[SPL]"]
+SSN = [
+    "matplotlib",
+    "tqdm",
+    "seaborn",
+    "np_utils[SPL] @ git+https://github.com/FinalSpark-np/np-utils.git"
+]
