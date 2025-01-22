@@ -53,4 +53,4 @@ SSN = [
     "tqdm",
     "seaborn",
     "np_utils[SPL] @ git+https://github.com/FinalSpark-np/np-utils.git"
-      ]
+]
