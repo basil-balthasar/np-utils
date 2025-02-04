@@ -542,7 +542,7 @@ class StimScan:
             spikes = events[events["channel"] == electrode]["Time"]
             ax.eventplot(
                 spikes,
-                lineoffsets=i,
+                lineoffsets=electrode - min(self.scan_chanels),
                 linelengths=0.5,
                 color="blue",
             )
