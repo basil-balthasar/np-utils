@@ -2,3 +2,4 @@ import cross_corr
 import spike_sorting
 import parameters_loader
 import raw_loader
+import stim_scan
