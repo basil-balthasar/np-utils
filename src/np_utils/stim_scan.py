@@ -538,14 +538,19 @@ class StimScan:
             )
         # raster plot
         events_channels = events["channel"].unique()
-        for i, electrode in enumerate(events_channels):
-            spikes = events[events["channel"] == electrode]["Time"]
-            ax.eventplot(
-                spikes,
-                lineoffsets=electrode - min(self.scan_chanels),
-                linelengths=0.5,
-                color="blue",
-            )
+        for i, electrode in enumerate(y_axis_labs): 
+            if electrode in events_channels:
+                spikes = events[events["channel"] == electrode]["Time"]
+                ax.eventplot(
+                    spikes,
+                    lineoffsets=i, 
+                    linelengths=0.5,
+                    color="blue",
+                )
+            else:
+                continue
+
+
         title = "Raster plot of spike events"
         if param_dict is not None:
             title += "\n"
