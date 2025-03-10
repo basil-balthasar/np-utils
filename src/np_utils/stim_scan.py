@@ -19,7 +19,7 @@ from neuroplatform import (
     StimPolarity,
     StimShape,
 )
-from neuroplatform_utils import StimParamLoader
+from parameters_loader import StimParamLoader
 
 
 class ExtendedTimedelta(timedelta):
