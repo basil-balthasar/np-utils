@@ -30,7 +30,7 @@ setup(
         "CCM": ["matplotlib", "seaborn", "numba", "tqdm"],
         "SSN": ["matplotlib", "tqdm", "seaborn", "np_utils[SPL] @ git+https://github.com/FinalSpark-np/np-utils.git"],
     },
-    package_data={"np_utils": ["src/np_utils/MEA_schema.png"]},
+    package_data={"np_utils": ["MEA_schema.png"]},
     project_urls={
         "Homepage": "https://github.com/FinalSpark-np/np-utils",
         "Documentation": "https://finalspark-np.github.io/np-docs/welcome.html#navigation",
