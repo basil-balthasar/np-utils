@@ -164,7 +164,7 @@ class StimParamLoader:
         loader.disable_all_and_send()
     """
 
-    MEA_SCHEMA = str(Path("/data/workspace_files/MEA_schema.png").resolve())
+    MEA_SCHEMA = str(Path(__file__).parent / "MEA_schema.png")
     try:
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
