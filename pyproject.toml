@@ -32,7 +32,7 @@ include = [
 
 [tool.setuptools.package-data]
 np_utils = [
-    "src/np_utils/MEA_schema.png",
+    "MEA_schema.png",
 ]
 
 [project.urls]
