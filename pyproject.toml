@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "np_utils"
+name = "my_np_utils"
 version = "0.1.0"
 requires-python = ">=3.11"
 authors = [
